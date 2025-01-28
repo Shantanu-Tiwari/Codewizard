@@ -4,6 +4,7 @@ const nextConfig = {
     ignoreBuildErrors: true
   },
   images: {
+    domains: ["quaint-buzzard-426.convex.cloud"],
     remotePatterns: [
       {
         protocol: 'https',

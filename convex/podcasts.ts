@@ -54,12 +54,25 @@ export const createPodcast = mutation({
 });
 
 // this mutation is required to generate the url after uploading the file to the storage.
-export const getUrl = mutation({
+export const generateUploadUrl = mutation({
   args: {
-    storageId: v.id("_storage"),
+    fileType: v.string(), // 'audio' or 'image'
   },
   handler: async (ctx, args) => {
-    return await ctx.storage.getUrl(args.storageId);
+    // Generate a unique ID for the file upload (based on file type)
+    const uploadId = `${args.fileType}-${Date.now()}`;
+
+    // Try generating the signed URL without arguments
+    try {
+      // Using the ctx.storage API to generate the URL directly
+      const signedUrl = await ctx.storage.generateUploadUrl();
+
+      // Return the signed URL and storage ID
+      return { uploadUrl: signedUrl, storageId: uploadId };
+    } catch (error) {
+      // Handle any errors during URL generation
+      throw new ConvexError("Failed to generate upload URL", error);
+    }
   },
 });
 
@@ -72,14 +85,14 @@ export const getPodcastByVoiceType = query({
     const podcast = await ctx.db.get(args.podcastId);
 
     return await ctx.db
-      .query("podcasts")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("voiceType"), podcast?.voiceType),
-          q.neq(q.field("_id"), args.podcastId)
+        .query("podcasts")
+        .filter((q) =>
+            q.and(
+                q.eq(q.field("voiceType"), podcast?.voiceType),
+                q.neq(q.field("_id"), args.podcastId)
+            )
         )
-      )
-      .collect();
+        .collect();
   },
 });
 
